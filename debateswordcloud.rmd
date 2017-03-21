@@ -4,6 +4,8 @@ author: "Stephen Hage"
 output: 
   html_document: 
     toc: yes
+  pdf_document: 
+    toc: yes
 ---
 
 ```{r setup, include=FALSE,warning=FALSE}
