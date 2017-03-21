@@ -1,0 +1,299 @@
+---
+title: "debateswordcloud"
+author: "Stephen Hage"
+output: 
+  html_document: 
+    toc: yes
+---
+
+```{r setup, include=FALSE,warning=FALSE}
+
+library(wordcloud2)
+library(RCurl)
+library(XML)
+library(tm)
+library(SnowballC)
+```
+
+#Debate Word Cloud  
+
+The "presidential" debates were some of the most watched events on TV in 2016. The problem was they lasted multiple hours (not to mention how low the candidates sank to try to win). This is a way to represent the ways the candidates speak to help make a decision who to vote for.
+
+First we read the transcript of one of the debates:
+
+```{r gettext,echo=TRUE}
+input <- htmlTreeParse('http://www.politico.com/story/2016/09/full-transcript-first-2016-presidential-debate-228761',useInternalNodes = T)
+
+txt <- unlist(xpathApply(input,'//p',xmlValue))
+txt <- gsub('\\n',' ',txt)
+txt <- txt[c(-1,-2,-3,-449,-450,-451,-452,-453)]
+
+
+```
+
+The transcript is nicely sorted into paragraphs, but since we want to know what the candidates said we need to sort by the speaker, which is usually the first word in the paragraph.  
+
+In a few cases, the speaker goes on for multiple paragraphs. In those cases we append the text to the most recent paragraph that does start with a speaker name.
+
+```{r correcttext,echo=TRUE}
+
+for (i in 2:length(txt)){
+  if (vapply(strsplit(txt[i],' '),`[`,1,FUN.VALUE = character(1)) %in% c('HOLT:','CLINTON:','TRUMP:'))
+    {txt[i]
+  }
+  else if (vapply(strsplit(txt[i-1],' '),`[`,1,FUN.VALUE = character(1)) %in% c('HOLT:','CLINTON:','TRUMP:')){
+    txt[i-1] <- paste(txt[i-1],txt[i])
+    txt[i] <- NA
+  }
+   else if (vapply(strsplit(txt[i-2],' '),`[`,1,FUN.VALUE = character(1)) %in% c('HOLT:','CLINTON:','TRUMP:')){
+    txt[i-2] <- paste(txt[i-2],txt[i])
+    txt[i] <- NA
+   } 
+  else if (vapply(strsplit(txt[i-3],' '),`[`,1,FUN.VALUE = character(1)) %in% c('HOLT:','CLINTON:','TRUMP:')){
+    txt[i-3] <- paste(txt[i-3],txt[i])
+    txt[i] <- NA
+  } 
+}
+
+txt <- txt[!is.na(txt)]
+
+```
+
+## Attributing Speech
+
+Now that we have the text organized, we need to split out the paragraphs and attribute their content to the appropriate speaker.
+
+```{r textorg, echo=TRUE}
+holt <- c("Holt")
+clinton <- c('Clinton')
+trump <- c('Trump')
+other <- c('Other')
+for (i in 1:length(txt)){
+  if (vapply(strsplit(txt[i],' '),`[`,1,FUN.VALUE = character(1))=='HOLT:'){
+    holt[i+1] <- txt[i]
+  }
+  else if (vapply(strsplit(txt[i],' '),`[`,1,FUN.VALUE = character(1))=='CLINTON:'){
+    clinton[i+1] <- txt[i]
+  } 
+  else if (vapply(strsplit(txt[i],' '),`[`,1,FUN.VALUE = character(1))=='TRUMP:'){
+    trump[i+1] <- txt[i]
+  }
+  
+  else {
+    other[i+1] <- txt[i]
+  }
+  
+}
+
+```
+
+That process left some empty observations in the vectors, so to eliminate them we ignore anything left as an NA.
+
+```{r cleantext,echo=TRUE}
+holt <- holt[!is.na(holt)]
+clinton <- clinton[!is.na(clinton)]
+trump <- trump[!is.na(trump)]
+other <- other[!is.na(other)]
+```
+
+Now we can count the frequency of each word for both candidates. This is the final step before creating the word clouds. A preliminary look shows several high-frequency words that aren't useful (such as 'and'). We remove those, tabulate the frequency, and show it as a data frame. 
+
+
+```{r wordcloud,echo=TRUE}
+creatematrix <- function(setofwords){
+  c <- Corpus(VectorSource(setofwords))
+  corp <- tm_map(c,removePunctuation)
+  corp <- tm_map(corp,tolower)
+  corp <- tm_map(corp,removeWords, stopwords('english'))
+  corp <- tm_map(corp,removeWords, c('and','said','will','well','get','but','that','weve','the','you','went','got','let','ive','say','see','there','theyre','youre'))
+  corp <- tm_map(corp,PlainTextDocument)
+  tdm <- TermDocumentMatrix(corp)
+  m <- as.matrix(tdm)
+  v <- sort(rowSums(m),decreasing=T)
+  d <- data.frame(word=names(v),freq=v)
+  return(d)
+  
+}
+
+
+clintoncorp <- creatematrix(clinton)
+trumpcorp <- creatematrix(trump)
+holtcorp <- creatematrix(holt)
+```
+
+##The word clouds
+
+The candidates' clouds can now be displayed. Who was the better candidate in your opinion?
+
+#Trump Word Cloud (First Debate)
+```{r showtrumpwc,echo=FALSE}
+
+wordcloud2(trumpcorp,fontFamily="Loma",  backgroundColor = 'white')
+
+
+```
+
+
+#Clinton Word Cloud (First Debate)
+
+```{r showclintonwc,echo=FALSE}
+
+wordcloud2(clintoncorp,fontFamily="Loma",  backgroundColor = 'white')
+
+```
+
+#Text From Other Debates
+
+```{r gettext2,echo=FALSE}
+input2 <- htmlTreeParse('http://www.politico.com/story/2016/10/2016-presidential-debate-transcript-229519',useInternalNodes = T)
+
+input3 <- htmlTreeParse('http://www.politico.com/story/2016/10/full-transcript-third-2016-presidential-debate-230063',useInternalNodes = T)
+
+txt2 <- unlist(xpathApply(input2,'//p',xmlValue))
+txt2 <- gsub('\\n',' ',txt2)
+txt2 <- txt2[c(-1,-2,-3,-4,-212,-213,-214,-215,-216)]
+raddatz <- c("Raddatz")
+cooper <- c("Cooper")
+brock <- c("Brock")
+trump2 <- c("Trump")
+clinton2 <- c("Clinton")
+other2 <- c('Other')
+
+for (i in 1:length(txt2)){
+  if (vapply(strsplit(txt2[i],' '),`[`,1,FUN.VALUE = character(1))=='Raddatz:'){
+    raddatz[i+1] <- txt2[i]
+  }
+  else if (vapply(strsplit(txt2[i],' '),`[`,1,FUN.VALUE = character(1))=='Clinton:'){
+    clinton2[i+1] <- txt2[i]
+  } 
+  else if (vapply(strsplit(txt2[i],' '),`[`,1,FUN.VALUE = character(1))=='Trump:'){
+    trump2[i+1] <- txt2[i]
+  }
+    else if (vapply(strsplit(txt2[i],' '),`[`,1,FUN.VALUE = character(1))=='Cooper:'){
+    cooper[i+1] <- txt2[i]
+  }
+    else if (vapply(strsplit(txt2[i],' '),`[`,1,FUN.VALUE = character(1))=='Brock:'){
+    brock[i+1] <- txt2[i]
+  }
+  
+  else {
+    other2[i+1] <- txt2[i]
+  }
+  
+}
+raddatz <- raddatz[!is.na(raddatz)]
+cooper <- cooper[!is.na(cooper)]
+brock <- brock[!is.na(brock)]
+clinton2 <- clinton2[!is.na(clinton2)]
+trump2 <- trump2[!is.na(trump2)]
+other2 <- other2[!is.na(other2)]
+
+clinton2corp <- creatematrix(clinton2)
+trump2corp <- creatematrix(trump2)
+raddatzcorp <- creatematrix(raddatz)
+coopercorp <- creatematrix(cooper)
+brockcorp <- creatematrix(brock)
+
+
+
+txt3 <- unlist(xpathApply(input3,'//p',xmlValue))
+txt3 <- gsub('\\n',' ',txt3)
+txt3 <- txt3[c(-1,-2,-3,-259,-260,-261,-262,-263)]
+wallace <- c('Wallace')
+trump3 <- c("Trump")
+clinton3 <- c("Clinton")
+other3 <- c('Other')
+
+for (i in 1:length(txt3)){
+  if (vapply(strsplit(txt3[i],' '),`[`,1,FUN.VALUE = character(1))=='Wallace:'){
+    cooper[i+1] <- txt3[i]
+  }
+  else if (vapply(strsplit(txt3[i],' '),`[`,1,FUN.VALUE = character(1))=='Clinton:'){
+    clinton3[i+1] <- txt3[i]
+  } 
+  else if (vapply(strsplit(txt3[i],' '),`[`,1,FUN.VALUE = character(1))=='Trump:'){
+    trump3[i+1] <- txt3[i]
+  }
+  
+  else {
+    other3[i+1] <- txt3[i]
+  }
+  
+}
+
+wallace <- wallace[!is.na(wallace)]
+clinton3 <- clinton3[!is.na(clinton3)]
+trump3 <- trump3[!is.na(trump3)]
+other3 <- other3[!is.na(other3)]
+
+wallacecorp <- creatematrix(wallace)
+clinton3corp <- creatematrix(clinton3)
+trump3corp <- creatematrix(trump3)
+```
+
+#Clinton Word Cloud (Second Debate)
+
+```{r showclintonwc2,echo=FALSE}
+
+wordcloud2(clinton2corp,fontFamily="Loma",  backgroundColor = 'white')
+
+```
+
+#Trump Word Cloud (Second Debate)
+
+```{r showtrumpwc2,echo=FALSE}
+
+wordcloud2(trump2corp,fontFamily="Loma",  backgroundColor = 'white')
+
+```
+
+#Clinton Word Cloud (Third Debate)  
+
+```{r showclintonwc3,echo=FALSE}
+
+wordcloud2(clinton3corp,fontFamily="Loma",  backgroundColor = 'white')
+
+```
+
+#Trump Word Cloud (Third Debate)
+
+```{r showtrumpwc3,echo=FALSE}
+
+wordcloud2(trump3corp,fontFamily="Loma",  backgroundColor = 'white')
+
+```
+
+#Clinton Word Cloud (Combined Text From All Debates)
+
+```{r showclintonwcfull,echo=FALSE}
+clintonfull <- data.frame(clinton)
+clintondf <- data.frame(clinton2)
+clintondf2 <- data.frame(clinton3)
+names(clintondf) <- 'clinton'
+names(clintondf2) <- 'clinton'
+clintonfull <- rbind(clintonfull,clintondf,clintondf2)
+clintoncorpfull <- creatematrix(clintonfull)
+wordcloud2(clintoncorpfull,fontFamily="Loma",  backgroundColor = 'white')
+
+```
+
+#Trump Word Cloud (Combined Text From All Debates)
+
+
+```{r showtrumpwcfull,echo=FALSE}
+trumpfull <- data.frame(trump)
+trumpdf <- data.frame(trump2)
+trumpdf2 <- data.frame(trump3)
+names(trumpdf) <- 'trump'
+names(trumpdf2) <- 'trump'
+trumpfull <- rbind(trumpfull,trumpdf,trumpdf2)
+trumpcorpfull <- creatematrix(trumpfull)
+wordcloud2(trumpcorpfull,fontFamily="Loma",  backgroundColor = 'white')
+
+```
+
+#Full Code
+
+```{r appendix, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+
+```
