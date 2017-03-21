@@ -17,7 +17,7 @@ library(tm)
 library(SnowballC)
 ```
 
-#Debate Word Cloud  
+# Debate Word Cloud  
 
 The "presidential" debates were some of the most watched events on TV in 2016. The problem was they lasted multiple hours (not to mention how low the candidates sank to try to win). This is a way to represent the ways the candidates speak to help make a decision who to vote for.
 
@@ -61,7 +61,7 @@ txt <- txt[!is.na(txt)]
 
 ```
 
-## Attributing Speech
+# #  Attributing Speech
 
 Now that we have the text organized, we need to split out the paragraphs and attribute their content to the appropriate speaker.
 
@@ -123,11 +123,11 @@ trumpcorp <- creatematrix(trump)
 holtcorp <- creatematrix(holt)
 ```
 
-##The word clouds
+# # The word clouds
 
 The candidates' clouds can now be displayed. Who was the better candidate in your opinion?
 
-#Trump Word Cloud (First Debate)
+# Trump Word Cloud (First Debate)
 ```{r showtrumpwc,echo=FALSE}
 
 wordcloud2(trumpcorp,fontFamily="Loma",  backgroundColor = 'white')
@@ -135,8 +135,10 @@ wordcloud2(trumpcorp,fontFamily="Loma",  backgroundColor = 'white')
 
 ```
 
+![Trump 1st Debate](/images/trumpdebate1.png)
 
-#Clinton Word Cloud (First Debate)
+
+# Clinton Word Cloud (First Debate)
 
 ```{r showclintonwc,echo=FALSE}
 
@@ -144,7 +146,9 @@ wordcloud2(clintoncorp,fontFamily="Loma",  backgroundColor = 'white')
 
 ```
 
-#Text From Other Debates
+![Clinton 1st Debate](/images/clintondebate1.png)
+
+# Text From Other Debates
 
 ```{r gettext2,echo=FALSE}
 input2 <- htmlTreeParse('http://www.politico.com/story/2016/10/2016-presidential-debate-transcript-229519',useInternalNodes = T)
@@ -233,7 +237,7 @@ clinton3corp <- creatematrix(clinton3)
 trump3corp <- creatematrix(trump3)
 ```
 
-#Clinton Word Cloud (Second Debate)
+# Clinton Word Cloud (Second Debate)
 
 ```{r showclintonwc2,echo=FALSE}
 
@@ -241,7 +245,9 @@ wordcloud2(clinton2corp,fontFamily="Loma",  backgroundColor = 'white')
 
 ```
 
-#Trump Word Cloud (Second Debate)
+![Clinton 2nd Debate](/images/clintondebate2.png)
+
+# Trump Word Cloud (Second Debate)
 
 ```{r showtrumpwc2,echo=FALSE}
 
@@ -249,15 +255,19 @@ wordcloud2(trump2corp,fontFamily="Loma",  backgroundColor = 'white')
 
 ```
 
-#Clinton Word Cloud (Third Debate)  
+![Trump 2nd Debate](/images/trumpdebate2.png)
+
+# Clinton Word Cloud (Third Debate)  
 
 ```{r showclintonwc3,echo=FALSE}
 
 wordcloud2(clinton3corp,fontFamily="Loma",  backgroundColor = 'white')
 
 ```
+![Clinton 3rd Debate](/images/clintondebate3.png)
 
-#Trump Word Cloud (Third Debate)
+
+# Trump Word Cloud (Third Debate)
 
 ```{r showtrumpwc3,echo=FALSE}
 
@@ -265,7 +275,9 @@ wordcloud2(trump3corp,fontFamily="Loma",  backgroundColor = 'white')
 
 ```
 
-#Clinton Word Cloud (Combined Text From All Debates)
+![Trump 3rd Debate](/images/trumpdebate3.png)
+
+# Clinton Word Cloud (Combined Text From All Debates)
 
 ```{r showclintonwcfull,echo=FALSE}
 clintonfull <- data.frame(clinton)
@@ -278,8 +290,9 @@ clintoncorpfull <- creatematrix(clintonfull)
 wordcloud2(clintoncorpfull,fontFamily="Loma",  backgroundColor = 'white')
 
 ```
+![Clinton All Debates](/images/clintonalldebates.png)
 
-#Trump Word Cloud (Combined Text From All Debates)
+# Trump Word Cloud (Combined Text From All Debates)
 
 
 ```{r showtrumpwcfull,echo=FALSE}
@@ -293,8 +306,9 @@ trumpcorpfull <- creatematrix(trumpfull)
 wordcloud2(trumpcorpfull,fontFamily="Loma",  backgroundColor = 'white')
 
 ```
+![Trump All Debates](/images/trumpalldebates.png)
 
-#Full Code
+# Full Code
 
 ```{r appendix, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
 
